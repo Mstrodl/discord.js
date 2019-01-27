@@ -1,13 +1,17 @@
 {
   "extends": "eslint:recommended",
   "parserOptions": {
-    "ecmaVersion": 2017
+    "ecmaVersion": 2018
   },
   "env": {
     "es6": true,
     "node": true
   },
+  "overrides": [
+    { "files": ["*.browser.js"], "env": { "browser": true } }
+  ],
   "rules": {
+    "strict": ["error", "global"],
     "no-await-in-loop": "warn",
     "no-compare-neg-zero": "error",
     "no-extra-parens": ["warn", "all", {
@@ -77,6 +81,7 @@
     "no-undef-init": "error",
 
     "callback-return": "error",
+    "getter-return": "off",
     "handle-callback-err": "error",
     "no-mixed-requires": "error",
     "no-new-require": "error",
@@ -124,7 +129,11 @@
     "semi-spacing": "error",
     "semi": "error",
     "space-before-blocks": "error",
-    "space-before-function-paren": ["error", "never"],
+    "space-before-function-paren": ["error", {
+      "anonymous": "never",
+      "named": "never",
+      "asyncArrow": "always"
+    }],
     "space-in-parens": "error",
     "space-infix-ops": "error",
     "space-unary-ops": "error",

@@ -5,16 +5,18 @@
   "main": "./src/index",
   "types": "./typings/index.d.ts",
   "scripts": {
-    "test": "npm run lint && npm run docs:test",
+    "test": "npm run lint && npm run docs:test && npm run lint:typings",
     "docs": "docgen --source src --custom docs/index.yml --output docs/docs.json",
     "docs:test": "docgen --source src --custom docs/index.yml",
-    "lint": "eslint src",
+    "lint": "eslint src *.js",
     "lint:fix": "eslint --fix src",
-    "webpack": "parallel-webpack"
+    "lint:typings": "tslint typings/index.d.ts",
+    "build:browser": "webpack",
+    "prepublishOnly": "npm run test && NODE_ENV=production npm run build:browser"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hydrabolt/discord.js.git"
+    "url": "git+https://github.com/discordjs/discord.js.git"
   },
   "keywords": [
     "discord",
@@ -27,68 +29,68 @@
   "author": "Amish Shah <amishshah.2k@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hydrabolt/discord.js/issues"
+    "url": "https://github.com/discordjs/discord.js/issues"
   },
-  "homepage": "https://github.com/hydrabolt/discord.js#readme",
+  "homepage": "https://github.com/discordjs/discord.js#readme",
   "runkitExampleFilename": "./docs/examples/ping.js",
+  "unpkg": "./webpack/discord.min.js",
   "dependencies": {
-    "long": "^3.2.0",
-    "prism-media": "^0.0.1",
-    "snekfetch": "^3.1.0",
+    "form-data": "^2.3.2",
+    "node-fetch": "^2.1.2",
+    "pako": "^1.0.0",
+    "prism-media": "amishshah/prism-media",
+    "setimmediate": "^1.0.5",
     "tweetnacl": "^1.0.0",
-    "ws": "^3.0.0"
+    "ws": "^6.0.0"
   },
   "peerDependencies": {
-    "bufferutil": "^3.0.0",
-    "erlpack": "hammerandchisel/erlpack",
-    "node-opus": "^0.2.5",
-    "opusscript": "^0.0.3",
-    "sodium": "^2.0.1",
-    "libsodium-wrappers": "^0.5.1",
-    "uws": "^0.14.1"
+    "@discordjs/uws": "^10.149.0",
+    "bufferutil": "^4.0.0",
+    "erlpack": "discordapp/erlpack",
+    "libsodium-wrappers": "^0.7.3",
+    "sodium": "^2.0.3",
+    "zlib-sync": "^0.1.4"
   },
   "devDependencies": {
-    "@types/node": "^7.0.0",
-    "discord.js-docgen": "hydrabolt/discord.js-docgen",
-    "eslint": "^3.19.0",
-    "parallel-webpack": "^1.6.0",
-    "uglify-js": "mishoo/UglifyJS2#harmony-v2.8.22",
-    "uglifyjs-webpack-plugin": "^0.4.3",
-    "webpack": "^2.2.0"
+    "@types/node": "^10.7.1",
+    "discord.js-docgen": "discordjs/docgen",
+    "eslint": "^5.4.0",
+    "json-filter-loader": "^1.0.0",
+    "terser-webpack-plugin": "^1.1.0",
+    "tslint": "^5.11.0",
+    "tslint-config-typings": "^0.3.1",
+    "typescript": "^3.0.1",
+    "webpack": "^4.17.0",
+    "webpack-cli": "^3.1.0"
   },
   "engines": {
     "node": ">=8.0.0"
   },
   "browser": {
+    "https": false,
     "ws": false,
     "uws": false,
+    "@discordjs/uws": false,
     "erlpack": false,
     "prism-media": false,
     "opusscript": false,
     "node-opus": false,
     "tweetnacl": false,
     "sodium": false,
+    "zlib-sync": false,
     "src/sharding/Shard.js": false,
     "src/sharding/ShardClientUtil.js": false,
     "src/sharding/ShardingManager.js": false,
-    "src/client/voice/dispatcher/StreamDispatcher.js": false,
-    "src/client/voice/opus/BaseOpusEngine.js": false,
-    "src/client/voice/opus/NodeOpusEngine.js": false,
-    "src/client/voice/opus/OpusEngineList.js": false,
-    "src/client/voice/opus/OpusScriptEngine.js": false,
-    "src/client/voice/pcm/ConverterEngine.js": false,
-    "src/client/voice/pcm/ConverterEngineList.js": false,
-    "src/client/voice/pcm/FfmpegConverterEngine.js": false,
-    "src/client/voice/player/AudioPlayer.js": false,
-    "src/client/voice/receiver/VoiceReadable.js": false,
-    "src/client/voice/receiver/VoiceReceiver.js": false,
-    "src/client/voice/util/Secretbox.js": false,
-    "src/client/voice/util/SecretKey.js": false,
-    "src/client/voice/util/VolumeInterface.js": false,
     "src/client/voice/ClientVoiceManager.js": false,
-    "src/client/voice/VoiceBroadcast.js": false,
     "src/client/voice/VoiceConnection.js": false,
-    "src/client/voice/VoiceUDPClient.js": false,
-    "src/client/voice/VoiceWebSocket.js": false
+    "src/client/voice/networking/VoiceUDPClient.js": false,
+    "src/client/voice/networking/VoiceWebSocket.js": false,
+    "src/client/voice/dispatcher/StreamDispatcher.js": false,
+    "src/client/voice/player/AudioPlayer.js": false,
+    "src/client/voice/receiver/PacketHandler.js": false,
+    "src/client/voice/receiver/Receiver.js": false,
+    "src/client/voice/util/Secretbox.js": false,
+    "src/client/voice/util/VolumeInterface.js": false,
+    "src/client/voice/VoiceBroadcast.js": false
   }
 }

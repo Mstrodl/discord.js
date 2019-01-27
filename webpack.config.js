@@ -1,44 +1,64 @@
-/*
-  ONLY RUN BUILDS WITH `npm run webpack`!
-  DO NOT USE NORMAL WEBPACK! IT WILL NOT WORK!
-*/
+'use strict';
 
+const path = require('path');
 const webpack = require('webpack');
-const createVariants = require('parallel-webpack').createVariants;
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
 const version = require('./package.json').version;
 
-const createConfig = options => {
-  const plugins = [
-    new webpack.DefinePlugin({ 'global.GENTLY': false }),
-  ];
+const prod = process.env.NODE_ENV === 'production';
 
-  if (options.minify) plugins.push(new UglifyJSPlugin({ minimize: true }));
+// eslint-disable-next-line max-len
+const filename = `discord${process.env.VERSIONED ? `.${version}` : ''}${prod ? '.min' : ''}.js`;
 
-  const filename = `./webpack/discord${process.env.VERSIONED === 'false' ? '' : '.' + version}${options.minify ? '.min' : ''}.js`; // eslint-disable-line
-
-  return {
-    entry: './src/index.js',
-    output: {
-      path: __dirname,
-      filename,
-    },
-    module: {
-      rules: [
-        { test: /\.md$/, loader: 'ignore-loader' },
-      ],
-    },
-    node: {
-      fs: 'empty',
-      dns: 'mock',
-      tls: 'mock',
-      child_process: 'empty',
-      dgram: 'empty',
-      zlib: 'empty',
-      __dirname: true,
-    },
-    plugins,
-  };
+module.exports = {
+  entry: './src/index.js',
+  mode: prod ? 'production' : 'development',
+  output: {
+    path: path.resolve('./webpack'),
+    filename,
+    library: 'Discord',
+    libraryTarget: 'umd',
+  },
+  module: {
+    rules: [
+      { test: /\.md$/, loader: 'ignore-loader' },
+      {
+        test: require.resolve('./package.json'),
+        type: 'javascript/auto',
+        use: {
+          loader: 'json-filter-loader',
+          options: {
+            used: ['version', 'homepage'],
+          },
+        },
+      },
+    ],
+  },
+  node: {
+    fs: 'empty',
+    dns: 'mock',
+    tls: 'mock',
+    child_process: 'empty',
+    dgram: 'empty',
+    __dirname: true,
+    process: true,
+    path: 'empty',
+    Buffer: false,
+    zlib: 'empty',
+  },
+  optimization: {
+    minimizer: [
+      new TerserJSPlugin({
+        terserOptions: {
+          mangle: { keep_classnames: true },
+          compress: { keep_classnames: true },
+          output: { comments: false },
+        },
+        parallel: true,
+      }),
+    ],
+  },
+  plugins: [
+    new webpack.optimize.ModuleConcatenationPlugin(),
+  ],
 };
-
-module.exports = createVariants({}, { minify: [false, true] }, createConfig);

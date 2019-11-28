@@ -1,4 +1,16 @@
+declare enum ChannelType {
+	text,
+	dm,
+	voice,
+	group,
+	category,
+	news,
+	store,
+	unknown
+}
+
 declare module 'discord.js' {
+	import BaseCollection from '@discordjs/collection';
 	import { EventEmitter } from 'events';
 	import { Stream, Readable, Writable } from 'stream';
 	import { ChildProcess } from 'child_process';
@@ -99,6 +111,7 @@ declare module 'discord.js' {
 		constructor(bits?: BitFieldResolvable<S>);
 		public bitfield: number;
 		public add(...bits: BitFieldResolvable<S>[]): BitField<S>;
+		public any(bit: BitFieldResolvable<S>): boolean;
 		public equals(bit: BitFieldResolvable<S>): boolean;
 		public freeze(): Readonly<BitField<S>>;
 		public has(bit: BitFieldResolvable<S>): boolean;
@@ -123,7 +136,7 @@ declare module 'discord.js' {
 		public readonly createdTimestamp: number;
 		public deleted: boolean;
 		public id: Snowflake;
-		public type: 'dm' | 'text' | 'voice' | 'category' | 'news' | 'store' | 'unknown';
+		public type: keyof typeof ChannelType;
 		public delete(reason?: string): Promise<Channel>;
 		public fetch(): Promise<Channel>;
 		public toString(): string;
@@ -157,80 +170,78 @@ declare module 'discord.js' {
 		public sweepMessages(lifetime?: number): number;
 		public toJSON(): object;
 
-		public on(event: 'channelCreate' | 'channelDelete', listener: (channel: Channel) => void): this;
-		public on(event: 'channelPinsUpdate', listener: (channel: Channel, time: Date) => void): this;
-		public on(event: 'channelUpdate', listener: (oldChannel: Channel, newChannel: Channel) => void): this;
+		public on(event: 'channelCreate' | 'channelDelete', listener: (channel: Channel | PartialChannel) => void): this;
+		public on(event: 'channelPinsUpdate', listener: (channel: Channel | PartialChannel, time: Date) => void): this;
+		public on(event: 'channelUpdate', listener: (oldChannel: Channel | PartialChannel, newChannel: Channel | PartialChannel) => void): this;
 		public on(event: 'debug' | 'warn', listener: (info: string) => void): this;
 		public on(event: 'disconnect', listener: (event: any, shardID: number) => void): this;
 		public on(event: 'emojiCreate' | 'emojiDelete', listener: (emoji: GuildEmoji) => void): this;
 		public on(event: 'emojiUpdate', listener: (oldEmoji: GuildEmoji, newEmoji: GuildEmoji) => void): this;
 		public on(event: 'error', listener: (error: Error) => void): this;
-		public on(event: 'guildBanAdd' | 'guildBanRemove', listener: (guild: Guild, user: User) => void): this;
+		public on(event: 'guildBanAdd' | 'guildBanRemove', listener: (guild: Guild, user: User | PartialUser) => void): this;
 		public on(event: 'guildCreate' | 'guildDelete' | 'guildUnavailable', listener: (guild: Guild) => void): this;
-		public on(event: 'guildMemberAdd' | 'guildMemberAvailable' | 'guildMemberRemove', listener: (member: GuildMember) => void): this;
-		public on(event: 'guildMembersChunk', listener: (members: Collection<Snowflake, GuildMember>, guild: Guild) => void): this;
-		public on(event: 'guildMemberSpeaking', listener: (member: GuildMember, speaking: Readonly<Speaking>) => void): this;
-		public on(event: 'guildMemberUpdate', listener: (oldMember: GuildMember, newMember: GuildMember) => void): this;
+		public on(event: 'guildMemberAdd' | 'guildMemberAvailable' | 'guildMemberRemove', listener: (member: GuildMember | PartialGuildMember) => void): this;
+		public on(event: 'guildMembersChunk', listener: (members: Collection<Snowflake, GuildMember | PartialGuildMember>, guild: Guild) => void): this;
+		public on(event: 'guildMemberSpeaking', listener: (member: GuildMember | PartialGuildMember, speaking: Readonly<Speaking>) => void): this;
+		public on(event: 'guildMemberUpdate', listener: (oldMember: GuildMember | PartialGuildMember, newMember: GuildMember | PartialGuildMember) => void): this;
 		public on(event: 'guildUpdate', listener: (oldGuild: Guild, newGuild: Guild) => void): this;
 		public on(event: 'guildIntegrationsUpdate', listener: (guild: Guild) => void): this;
-		public on(event: 'message' | 'messageDelete' | 'messageReactionRemoveAll', listener: (message: Message) => void): this;
-		public on(event: 'messageDeleteBulk', listener: (messages: Collection<Snowflake, Message>) => void): this;
-		public on(event: 'messageReactionAdd' | 'messageReactionRemove', listener: (messageReaction: MessageReaction, user: User) => void): this;
-		public on(event: 'messageUpdate', listener: (oldMessage: Message, newMessage: Message) => void): this;
+		public on(event: 'message' | 'messageDelete' | 'messageReactionRemoveAll', listener: (message: Message | PartialMessage) => void): this;
+		public on(event: 'messageDeleteBulk', listener: (messages: Collection<Snowflake, Message | PartialMessage>) => void): this;
+		public on(event: 'messageReactionAdd' | 'messageReactionRemove', listener: (messageReaction: MessageReaction, user: User | PartialUser) => void): this;
+		public on(event: 'messageUpdate', listener: (oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage) => void): this;
 		public on(event: 'presenceUpdate', listener: (oldPresence: Presence | undefined, newPresence: Presence) => void): this;
 		public on(event: 'rateLimit', listener: (rateLimitData: RateLimitData) => void): this;
 		public on(event: 'ready', listener: () => void): this;
-		public on(event: 'resume', listener: (replayed: number, shardID: number) => void): this;
 		public on(event: 'roleCreate' | 'roleDelete', listener: (role: Role) => void): this;
 		public on(event: 'roleUpdate', listener: (oldRole: Role, newRole: Role) => void): this;
-		public on(event: 'typingStart' | 'typingStop', listener: (channel: Channel, user: User) => void): this;
-		public on(event: 'userUpdate', listener: (oldUser: User, newUser: User) => void): this;
-		public on(event: 'voiceStateUpdate', listener: (oldState: VoiceState | undefined, newState: VoiceState) => void): this;
+		public on(event: 'typingStart' | 'typingStop', listener: (channel: Channel | PartialChannel, user: User | PartialUser) => void): this;
+		public on(event: 'userUpdate', listener: (oldUser: User | PartialUser, newUser: User | PartialUser) => void): this;
+		public on(event: 'voiceStateUpdate', listener: (oldState: VoiceState, newState: VoiceState) => void): this;
 		public on(event: 'webhookUpdate', listener: (channel: TextChannel) => void): this;
 		public on(event: 'invalidated', listener: () => void): this;
-		public on(event: 'shardDisconnected', listener: (event: CloseEvent, id: number) => void): this;
+		public on(event: 'shardDisconnect', listener: (event: CloseEvent, id: number) => void): this;
 		public on(event: 'shardError', listener: (error: Error, id: number) => void): this;
 		public on(event: 'shardReconnecting', listener: (id: number) => void): this;
 		public on(event: 'shardReady', listener: (id: number) => void): this;
-		public on(event: 'shardResumed', listener: (id: number) => void): this;
+		public on(event: 'shardResume', listener: (id: number, replayed: number) => void): this;
 		public on(event: string, listener: Function): this;
 
-		public once(event: 'channelCreate' | 'channelDelete', listener: (channel: Channel) => void): this;
-		public once(event: 'channelPinsUpdate', listener: (channel: Channel, time: Date) => void): this;
-		public once(event: 'channelUpdate', listener: (oldChannel: Channel, newChannel: Channel) => void): this;
+		public once(event: 'channelCreate' | 'channelDelete', listener: (channel: Channel | PartialChannel) => void): this;
+		public once(event: 'channelPinsUpdate', listener: (channel: Channel | PartialChannel, time: Date) => void): this;
+		public once(event: 'channelUpdate', listener: (oldChannel: Channel | PartialChannel, newChannel: Channel | PartialChannel) => void): this;
 		public once(event: 'debug' | 'warn', listener: (info: string) => void): this;
 		public once(event: 'disconnect', listener: (event: any, shardID: number) => void): this;
 		public once(event: 'emojiCreate' | 'emojiDelete', listener: (emoji: GuildEmoji) => void): this;
 		public once(event: 'emojiUpdate', listener: (oldEmoji: GuildEmoji, newEmoji: GuildEmoji) => void): this;
 		public once(event: 'error', listener: (error: Error) => void): this;
-		public once(event: 'guildBanAdd' | 'guildBanRemove', listener: (guild: Guild, user: User) => void): this;
+		public once(event: 'guildBanAdd' | 'guildBanRemove', listener: (guild: Guild, user: User | PartialUser) => void): this;
 		public once(event: 'guildCreate' | 'guildDelete' | 'guildUnavailable', listener: (guild: Guild) => void): this;
-		public once(event: 'guildMemberAdd' | 'guildMemberAvailable' | 'guildMemberRemove', listener: (member: GuildMember) => void): this;
-		public once(event: 'guildMembersChunk', listener: (members: Collection<Snowflake, GuildMember>, guild: Guild) => void): this;
-		public once(event: 'guildMemberSpeaking', listener: (member: GuildMember, speaking: Readonly<Speaking>) => void): this;
-		public once(event: 'guildMemberUpdate', listener: (oldMember: GuildMember, newMember: GuildMember) => void): this;
+		public once(event: 'guildMemberAdd' | 'guildMemberAvailable' | 'guildMemberRemove', listener: (member: GuildMember | PartialGuildMember) => void): this;
+		public once(event: 'guildMembersChunk', listener: (members: Collection<Snowflake, GuildMember | PartialGuildMember>, guild: Guild) => void): this;
+		public once(event: 'guildMemberSpeaking', listener: (member: GuildMember | PartialGuildMember, speaking: Readonly<Speaking>) => void): this;
+		public once(event: 'guildMemberUpdate', listener: (oldMember: GuildMember | PartialGuildMember, newMember: GuildMember | PartialGuildMember) => void): this;
 		public once(event: 'guildUpdate', listener: (oldGuild: Guild, newGuild: Guild) => void): this;
 		public once(event: 'guildIntegrationsUpdate', listener: (guild: Guild) => void): this;
-		public once(event: 'message' | 'messageDelete' | 'messageReactionRemoveAll', listener: (message: Message) => void): this;
-		public once(event: 'messageDeleteBulk', listener: (messages: Collection<Snowflake, Message>) => void): this;
-		public once(event: 'messageReactionAdd' | 'messageReactionRemove', listener: (messageReaction: MessageReaction, user: User) => void): this;
-		public once(event: 'messageUpdate', listener: (oldMessage: Message, newMessage: Message) => void): this;
+		public once(event: 'message' | 'messageDelete' | 'messageReactionRemoveAll', listener: (message: Message | PartialMessage) => void): this;
+		public once(event: 'messageDeleteBulk', listener: (messages: Collection<Snowflake, Message | PartialMessage>) => void): this;
+		public once(event: 'messageReactionAdd' | 'messageReactionRemove', listener: (messageReaction: MessageReaction, user: User | PartialUser) => void): this;
+		public once(event: 'messageUpdate', listener: (oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage) => void): this;
 		public once(event: 'presenceUpdate', listener: (oldPresence: Presence | undefined, newPresence: Presence) => void): this;
 		public once(event: 'rateLimit', listener: (rateLimitData: RateLimitData) => void): this;
 		public once(event: 'ready', listener: () => void): this;
-		public once(event: 'resume', listener: (replayed: number, shardID: number) => void): this;
 		public once(event: 'roleCreate' | 'roleDelete', listener: (role: Role) => void): this;
 		public once(event: 'roleUpdate', listener: (oldRole: Role, newRole: Role) => void): this;
-		public once(event: 'typingStart' | 'typingStop', listener: (channel: Channel, user: User) => void): this;
-		public once(event: 'userUpdate', listener: (oldUser: User, newUser: User) => void): this;
-		public once(event: 'voiceStateUpdate', listener: (oldState: VoiceState | undefined, newState: VoiceState) => void): this;
+		public once(event: 'typingStart' | 'typingStop', listener: (channel: Channel | PartialChannel, user: User | PartialUser) => void): this;
+		public once(event: 'userUpdate', listener: (oldUser: User | PartialUser, newUser: User | PartialUser) => void): this;
+		public once(event: 'voiceStateUpdate', listener: (oldState: VoiceState, newState: VoiceState) => void): this;
 		public once(event: 'webhookUpdate', listener: (channel: TextChannel) => void): this;
 		public once(event: 'invalidated', listener: () => void): this;
-		public once(event: 'shardDisconnected', listener: (event: CloseEvent, id: number) => void): this;
+		public once(event: 'shardDisconnect', listener: (event: CloseEvent, id: number) => void): this;
 		public once(event: 'shardError', listener: (error: Error, id: number) => void): this;
 		public once(event: 'shardReconnecting', listener: (id: number) => void): this;
 		public once(event: 'shardReady', listener: (id: number) => void): this;
-		public once(event: 'shardResumed', listener: (id: number) => void): this;
+		public once(event: 'shardResume', listener: (id: number, replayed: number) => void): this;
 		public once(event: string, listener: Function): this;
 	}
 
@@ -312,39 +323,13 @@ declare module 'discord.js' {
 		public setUsername(username: string): Promise<ClientUser>;
 	}
 
-	export class Collection<K, V> extends Map<K, V> {
-		private _array: V[];
-		private _keyArray: K[];
-
-		public array(): V[];
-		public clone(): Collection<K, V>;
-		public concat(...collections: Collection<K, V>[]): Collection<K, V>;
-		public each(fn: (value: V, key: K, collection: Collection<K, V>) => void, thisArg?: any): Collection<K, V>;
-		public equals(collection: Collection<any, any>): boolean;
-		public every(fn: (value: V, key: K, collection: Collection<K, V>) => boolean, thisArg?: any): boolean;
-		public filter(fn: (value: V, key: K, collection: Collection<K, V>) => boolean, thisArg?: any): Collection<K, V>;
-		public find(fn: (value: V, key: K, collection: Collection<K, V>) => boolean, thisArg?: any): V | undefined;
-		public findKey(fn: (value: V, key: K, collection: Collection<K, V>) => boolean, thisArg?: any): K | undefined;
-		public first(): V | undefined;
-		public first(count: number): V[];
-		public firstKey(): K | undefined;
-		public firstKey(count: number): K[];
-		public keyArray(): K[];
-		public last(): V | undefined;
-		public last(count: number): V[];
-		public lastKey(): K | undefined;
-		public lastKey(count: number): K[];
-		public map<T>(fn: (value: V, key: K, collection: Collection<K, V>) => T, thisArg?: any): T[];
-		public partition(fn: (value: V, key: K, collection: Collection<K, V>) => boolean, thisArg?: any): [Collection<K, V>, Collection<K, V>];
-		public random(): V | undefined;
-		public random(count: number): V[];
-		public randomKey(): K | undefined;
-		public randomKey(count: number): K[];
-		public reduce<T>(fn: (accumulator: T, value: V, key: K, collection: Collection<K, V>) => T, initialValue?: T): T;
-		public some(fn: (value: V, key: K, collection: Collection<K, V>) => boolean, thisArg?: any): boolean;
-		public sort(compareFunction?: (a: V, b: V, c?: K, d?: K) => number): Collection<K, V>;
-		public sweep(fn: (value: V, key: K, collection: Collection<K, V>) => boolean, thisArg?: any): number;
-		public tap(fn: (collection: Collection<K, V>) => void, thisArg?: any): Collection<K, V>;
+	export class Collection<K, V> extends BaseCollection<K, V> {
+		public flatMap<T>(fn: (value: V, key: K, collection: this) => Collection<K, T>): Collection<K, T>;
+		public flatMap<T, This>(fn: (this: This, value: V, key: K, collection: this) => Collection<K, T>, thisArg: This): Collection<K, T>;
+		public flatMap<T>(fn: (value: V, key: K, collection: this) => Collection<K, T>, thisArg?: unknown): Collection<K, T>;
+		public mapValues<T>(fn: (value: V, key: K, collection: this) => T): Collection<K, T>;
+		public mapValues<This, T>(fn: (this: This, value: V, key: K, collection: this) => T, thisArg: This): Collection<K, T>;
+		public mapValues<T>(fn: (value: V, key: K, collection: this) => T, thisArg?: unknown): Collection<K, T>;
 		public toJSON(): object;
 	}
 
@@ -475,11 +460,11 @@ declare module 'discord.js' {
 			ERROR: 'error';
 			WARN: 'warn';
 			DEBUG: 'debug';
-			SHARD_DISCONNECTED: 'shardDisconnected';
+			SHARD_DISCONNECT: 'shardDisconnect';
 			SHARD_ERROR: 'shardError';
 			SHARD_RECONNECTING: 'shardReconnecting';
 			SHARD_READY: 'shardReady';
-			SHARD_RESUMED: 'shardResumed';
+			SHARD_RESUME: 'shardResume';
 			INVALIDATED: 'invalidated';
 			RAW: 'raw';
 		};
@@ -491,7 +476,7 @@ declare module 'discord.js' {
 			RESUMED: 'resumed';
 		};
 		PartialTypes: {
-			[K in PartialType]: K;
+			[K in PartialTypes]: K;
 		};
 		WSEvents: {
 			[K in WSEventType]: K;
@@ -572,7 +557,10 @@ declare module 'discord.js' {
 			MAXIMUM_PINS: 30003;
 			MAXIMUM_ROLES: 30005;
 			MAXIMUM_REACTIONS: 30010;
+			MAXIMUM_CHANNELS: 30013;
+			MAXIMUM_INVITES: 30016;
 			UNAUTHORIZED: 40001;
+			USER_BANNED: 40007;
 			MISSING_ACCESS: 50001;
 			INVALID_ACCOUNT_TYPE: 50002;
 			CANNOT_EXECUTE_ON_DM: 50003;
@@ -591,9 +579,13 @@ declare module 'discord.js' {
 			INVALID_BULK_DELETE_QUANTITY: 50016;
 			CANNOT_PIN_MESSAGE_IN_OTHER_CHANNEL: 50019;
 			CANNOT_EXECUTE_ON_SYSTEM_MESSAGE: 50021;
+			INVALID_OAUTH_TOKEN: 50025;
 			BULK_DELETE_MESSAGE_TOO_OLD: 50034;
+			INVALID_FORM_BODY: 50035;
 			INVITE_ACCEPTED_TO_GUILD_NOT_CONTAINING_BOT: 50036;
+			INVALID_API_VERSION: 50041;
 			REACTION_BLOCKED: 90001;
+			RESOURCE_OVERLOADED: 130000;
 		};
 		VoiceStatus: {
 			CONNECTED: 0;
@@ -653,19 +645,19 @@ declare module 'discord.js' {
 		constructor(client: Client, data?: object);
 		public messages: MessageStore;
 		public recipient: User;
-		public readonly partial: boolean;
+		public readonly partial: false;
 	}
 
 	export class Emoji extends Base {
 		constructor(client: Client, emoji: object);
 		public animated: boolean;
-		public readonly createdAt: Date;
-		public readonly createdTimestamp: number;
-		public readonly deletable: boolean;
-		public id: Snowflake;
+		public readonly createdAt: Date | null;
+		public readonly createdTimestamp: number | null;
+		public deleted: boolean;
+		public id: Snowflake | null;
 		public name: string;
 		public readonly identifier: string;
-		public readonly url: string;
+		public readonly url: string | null;
 		public toJSON(): object;
 		public toString(): string;
 	}
@@ -709,6 +701,7 @@ declare module 'discord.js' {
 		public readonly nameAcronym: string;
 		public readonly owner: GuildMember | null;
 		public ownerID: Snowflake;
+		public readonly partnered: boolean;
 		public premiumSubscriptionCount: number | null;
 		public premiumTier: PremiumTier;
 		public presences: PresenceStore;
@@ -805,28 +798,29 @@ declare module 'discord.js' {
 		public readonly deletable: boolean;
 		public guild: Guild;
 		public readonly manageable: boolean;
+		public readonly members: Collection<Snowflake, GuildMember>;
 		public name: string;
 		public readonly parent: CategoryChannel | null;
-		public parentID: Snowflake;
+		public parentID: Snowflake | null;
 		public permissionOverwrites: Collection<Snowflake, PermissionOverwrites>;
 		public readonly permissionsLocked: boolean | null;
 		public readonly position: number;
 		public rawPosition: number;
 		public readonly viewable: boolean;
-		public clone(options?: GuildChannelCloneOptions): Promise<GuildChannel>;
+		public clone(options?: GuildChannelCloneOptions): Promise<this>;
 		public createInvite(options?: InviteOptions): Promise<Invite>;
-		public createOverwrite(userOrRole: RoleResolvable | UserResolvable, options: PermissionOverwriteOption, reason?: string): Promise<GuildChannel>;
-		public edit(data: ChannelData, reason?: string): Promise<GuildChannel>;
+		public createOverwrite(userOrRole: RoleResolvable | UserResolvable, options: PermissionOverwriteOption, reason?: string): Promise<this>;
+		public edit(data: ChannelData, reason?: string): Promise<this>;
 		public equals(channel: GuildChannel): boolean;
 		public fetchInvites(): Promise<Collection<string, Invite>>;
-		public lockPermissions(): Promise<GuildChannel>;
-		public overwritePermissions(options?: { permissionOverwrites?: OverwriteResolvable[] | Collection<Snowflake, OverwriteResolvable>, reason?: string }): Promise<GuildChannel>;
+		public lockPermissions(): Promise<this>;
+		public overwritePermissions(options?: { permissionOverwrites?: OverwriteResolvable[] | Collection<Snowflake, OverwriteResolvable>, reason?: string }): Promise<this>;
 		public permissionsFor(memberOrRole: GuildMemberResolvable | RoleResolvable): Readonly<Permissions> | null;
-		public setName(name: string, reason?: string): Promise<GuildChannel>;
-		public setParent(channel: GuildChannel | Snowflake, options?: { lockPermissions?: boolean, reason?: string }): Promise<GuildChannel>;
-		public setPosition(position: number, options?: { relative?: boolean, reason?: string }): Promise<GuildChannel>;
-		public setTopic(topic: string, reason?: string): Promise<GuildChannel>;
-		public updateOverwrite(userOrRole: RoleResolvable | UserResolvable, options: PermissionOverwriteOption, reason?: string): Promise<GuildChannel>;
+		public setName(name: string, reason?: string): Promise<this>;
+		public setParent(channel: GuildChannel | Snowflake, options?: { lockPermissions?: boolean, reason?: string }): Promise<this>;
+		public setPosition(position: number, options?: { relative?: boolean, reason?: string }): Promise<this>;
+		public setTopic(topic: string, reason?: string): Promise<this>;
+		public updateOverwrite(userOrRole: RoleResolvable | UserResolvable, options: PermissionOverwriteOption, reason?: string): Promise<this>;
 	}
 
 	export class StoreChannel extends GuildChannel {
@@ -839,7 +833,7 @@ declare module 'discord.js' {
 		private _roles: string[];
 
 		public available: boolean;
-		public deleted: boolean;
+		public readonly deletable: boolean;
 		public guild: Guild;
 		public managed: boolean;
 		public requiresColons: boolean;
@@ -864,8 +858,8 @@ declare module 'discord.js' {
 		public joinedTimestamp: number | null;
 		public readonly kickable: boolean;
 		public readonly manageable: boolean;
-		public nickname: string;
-		public readonly partial: boolean;
+		public nickname: string | null;
+		public readonly partial: false;
 		public readonly permissions: Readonly<Permissions>;
 		public readonly premiumSince: Date | null;
 		public premiumSinceTimestamp: number | null;
@@ -884,6 +878,7 @@ declare module 'discord.js' {
 		public setNickname(nickname: string, reason?: string): Promise<GuildMember>;
 		public toJSON(): object;
 		public toString(): string;
+		public valueOf(): string;
 	}
 
 	export class Integration extends Base {
@@ -938,15 +933,20 @@ declare module 'discord.js' {
 		public toString(): string;
 	}
 
+	export class MessageFlags extends BitField<MessageFlagsString> {
+		public static FLAGS: Record<MessageFlagsString, number>;
+		public static resolve(bit?: BitFieldResolvable<MessageFlagsString>): number;
+	}
+
 	export class Message extends Base {
 		constructor(client: Client, data: object, channel: TextChannel | DMChannel);
 		private _edits: Message[];
 		private patch(data: object): void;
 
-		public activity: GroupActivity | null;
+		public activity: MessageActivity | null;
 		public application: ClientApplication | null;
 		public attachments: Collection<Snowflake, MessageAttachment>;
-		public author: User | null;
+		public author: User;
 		public channel: TextChannel | DMChannel;
 		public readonly cleanContent: string;
 		public content: string;
@@ -963,8 +963,8 @@ declare module 'discord.js' {
 		public id: Snowflake;
 		public readonly member: GuildMember | null;
 		public mentions: MessageMentions;
-		public nonce: string;
-		public readonly partial: boolean;
+		public nonce: string | null;
+		public readonly partial: false;
 		public readonly pinnable: boolean;
 		public pinned: boolean;
 		public reactions: ReactionStore;
@@ -973,6 +973,8 @@ declare module 'discord.js' {
 		public type: MessageType;
 		public readonly url: string;
 		public webhookID: Snowflake | null;
+		public flags: Readonly<MessageFlags>;
+		public reference: MessageReference | null;
 		public awaitReactions(filter: CollectorFilter, options?: AwaitReactionsOptions): Promise<Collection<Snowflake, MessageReaction>>;
 		public createReactionCollector(filter: CollectorFilter, options?: ReactionCollectorOptions): ReactionCollector;
 		public delete(options?: { timeout?: number, reason?: string }): Promise<Message>;
@@ -983,8 +985,12 @@ declare module 'discord.js' {
 		public fetch(): Promise<Message>;
 		public pin(): Promise<Message>;
 		public react(emoji: EmojiIdentifierResolvable): Promise<MessageReaction>;
-		public reply(content?: StringResolvable, options?: MessageOptions | MessageAdditions): Promise<Message | Message[]>;
-		public reply(options?: MessageOptions | MessageAdditions | APIMessage): Promise<Message | Message[]>;
+		public reply(content?: StringResolvable, options?: MessageOptions | MessageAdditions): Promise<Message>;
+		public reply(content?: StringResolvable, options?: MessageOptions & { split?: false } | MessageAdditions): Promise<Message>;
+		public reply(content?: StringResolvable, options?: MessageOptions & { split: true | SplitOptions } | MessageAdditions): Promise<Message[]>;
+		public reply(options?: MessageOptions | MessageAdditions | APIMessage): Promise<Message>;
+		public reply(options?: MessageOptions & { split?: false } | MessageAdditions | APIMessage): Promise<Message>;
+		public reply(options?: MessageOptions & { split: true | SplitOptions } | MessageAdditions | APIMessage): Promise<Message[]>;
 		public toJSON(): object;
 		public toString(): string;
 		public unpin(): Promise<Message>;
@@ -1001,6 +1007,7 @@ declare module 'discord.js' {
 		public size: number;
 		public url: string;
 		public width: number | null;
+		public readonly spoiler: boolean;
 		public setFile(attachment: BufferResolvable | Stream, name?: string): this;
 		public setName(name: string): this;
 		public toJSON(): object;
@@ -1074,6 +1081,7 @@ declare module 'discord.js' {
 		public readonly members: Collection<Snowflake, GuildMember> | null;
 		public roles: Collection<Snowflake, Role>;
 		public users: Collection<Snowflake, User>;
+		public crosspostedChannels: Collection<Snowflake, CrosspostedChannel>;
 		public toJSON(): object;
 
 		public static CHANNELS_PATTERN: RegExp;
@@ -1109,6 +1117,7 @@ declare module 'discord.js' {
 	}
 
 	export class Permissions extends BitField<PermissionString> {
+		public any(permission: PermissionResolvable, checkAdmin?: boolean): boolean;
 		public has(permission: PermissionResolvable, checkAdmin?: boolean): boolean;
 
 		public static ALL: number;
@@ -1358,7 +1367,6 @@ declare module 'discord.js' {
 
 	export class TextChannel extends TextBasedChannel(GuildChannel) {
 		constructor(guild: Guild, data?: object);
-		public readonly members: Collection<Snowflake, GuildMember>;
 		public messages: MessageStore;
 		public nsfw: boolean;
 		public rateLimitPerUser: number;
@@ -1371,7 +1379,6 @@ declare module 'discord.js' {
 
 	export class NewsChannel extends TextBasedChannel(GuildChannel) {
 		constructor(guild: Guild, data?: object);
-		public readonly members: Collection<Snowflake, GuildMember>;
 		public messages: MessageStore;
 		public nsfw: boolean;
 		public topic: string;
@@ -1391,7 +1398,7 @@ declare module 'discord.js' {
 		public readonly dmChannel: DMChannel;
 		public id: Snowflake;
 		public locale: string;
-		public readonly partial: boolean;
+		public readonly partial: false;
 		public readonly presence: Presence;
 		public readonly tag: string;
 		public username: string;
@@ -1442,7 +1449,7 @@ declare module 'discord.js' {
 			route: object,
 			reason?: string
 		): Promise<{ id: Snowflake; position: number }[]>;
-		public static splitMessage(text: string, options?: SplitOptions): string[];
+		public static splitMessage(text: StringResolvable, options?: SplitOptions): string[];
 		public static str2ab(str: string): ArrayBuffer;
 	}
 
@@ -1475,7 +1482,6 @@ declare module 'discord.js' {
 		public readonly editable: boolean;
 		public readonly full: boolean;
 		public readonly joinable: boolean;
-		public readonly members: Collection<Snowflake, GuildMember>;
 		public readonly speakable: boolean;
 		public userLimit: number;
 		public join(): Promise<VoiceConnection>;
@@ -1582,10 +1588,12 @@ declare module 'discord.js' {
 		public serverDeaf?: boolean;
 		public serverMute?: boolean;
 		public sessionID?: string;
+		public streaming: boolean;
 		public readonly speaking: boolean | null;
 
 		public setDeaf(deaf: boolean, reason?: string): Promise<GuildMember>;
 		public setMute(mute: boolean, reason?: string): Promise<GuildMember>;
+		public kick(reason?: string): Promise<GuildMember>;
 		public setChannel(channel: ChannelResolvable | null, reason?: string): Promise<GuildMember>;
 		public setSelfDeaf(deaf: boolean): Promise<boolean>;
 		public setSelfMute(mute: boolean): Promise<boolean>;
@@ -1711,13 +1719,37 @@ declare module 'discord.js' {
 
 	export class DataStore<K, V, VConstructor = Constructable<V>, R = any> extends Collection<K, V> {
 		constructor(client: Client, iterable: Iterable<any>, holds: VConstructor);
-		public static readonly [Symbol.species]: typeof Collection;
 		public client: Client;
 		public holds: VConstructor;
 		public add(data: any, cache?: boolean, { id, extras }?: { id: K, extras: any[] }): V;
-		public remove(key: K): boolean;
+		public remove(key: K): void;
 		public resolve(resolvable: R): V | null;
 		public resolveID(resolvable: R): K | null;
+		// Don't worry about those bunch of ts-ignores here, this is intended https://github.com/microsoft/TypeScript/issues/1213
+		// @ts-ignore
+		public filter(fn: (value: V, key: K, collection: this) => boolean): Collection<K, V>;
+		// @ts-ignore
+		public filter<T>(fn: (this: T, value: V, key: K, collection: this) => boolean, thisArg: T): Collection<K, V>;
+		// @ts-ignore
+		public filter(fn: (value: V, key: K, collection: this) => boolean, thisArg?: unknown): Collection<K, V>;
+		// @ts-ignore
+		public partition(fn: (value: V, key: K, collection: this) => boolean): [Collection<K, V>, Collection<K, V>];
+		// @ts-ignore
+		public partition<T>(fn: (this: T, value: V, key: K, collection: this) => boolean, thisArg: T): [Collection<K, V>, Collection<K, V>];
+		// @ts-ignore
+		public partition(fn: (value: V, key: K, collection: this) => boolean, thisArg?: unknown): [Collection<K, V>, Collection<K, V>];
+		public flatMap<T>(fn: (value: V, key: K, collection: this) => Collection<K, T>): Collection<K, T>;
+		public flatMap<T, This>(fn: (this: This, value: V, key: K, collection: this) => Collection<K, T>, thisArg: This): Collection<K, T>;
+		public flatMap<T>(fn: (value: V, key: K, collection: this) => Collection<K, T>, thisArg?: unknown): Collection<K, T>;
+		public mapValues<T>(fn: (value: V, key: K, collection: this) => T): Collection<K, T>;
+		public mapValues<This, T>(fn: (this: This, value: V, key: K, collection: this) => T, thisArg: This): Collection<K, T>;
+		public mapValues<T>(fn: (value: V, key: K, collection: this) => T, thisArg?: unknown): Collection<K, T>;
+		// @ts-ignore
+		public clone(): Collection<K, V>;
+		// @ts-ignore
+		public concat(...collections: Collection<K, V>[]): Collection<K, V>;
+		// @ts-ignore
+		public sorted(compareFunction: (firstValue: V, secondValue: V, firstKey: K, secondKey: K) => number): Collection<K, V>;
 	}
 
 	export class GuildEmojiRoleStore extends OverridableDataStore<Snowflake, Role, typeof Role, RoleResolvable> {
@@ -1735,7 +1767,10 @@ declare module 'discord.js' {
 
 	export class GuildChannelStore extends DataStore<Snowflake, GuildChannel, typeof GuildChannel, GuildChannelResolvable> {
 		constructor(guild: Guild, iterable?: Iterable<any>);
-		public create(name: string, options?: GuildCreateChannelOptions): Promise<TextChannel | VoiceChannel | CategoryChannel>;
+		public create(name: string, options: GuildCreateChannelOptions & { type: 'voice' }): Promise<VoiceChannel>;
+		public create(name: string, options: GuildCreateChannelOptions & { type: 'category' }): Promise<CategoryChannel>;
+		public create(name: string, options?: GuildCreateChannelOptions & { type?: 'text' }): Promise<TextChannel>;
+		public create(name: string, options: GuildCreateChannelOptions): Promise<TextChannel | VoiceChannel | CategoryChannel>;
 	}
 
 	// Hacky workaround because changing the signature of an overridden method errors
@@ -1879,6 +1914,10 @@ declare module 'discord.js' {
 		| 'STREAMING'
 		| 'LISTENING'
 		| 'WATCHING';
+
+	type MessageFlagsString = 'CROSSPOSTED'
+		| 'IS_CROSSPOST'
+		| 'SUPPRESS_EMBEDS';
 
 	interface APIErrror {
 		UNKNOWN_ACCOUNT: number;
@@ -2122,9 +2161,15 @@ declare module 'discord.js' {
 		name?: string;
 	}
 
-	interface GroupActivity {
+	interface MessageActivity {
 		partyID: string;
 		type: number;
+	}
+
+	interface MessageReference {
+		channelID: string;
+		guildID: string;
+		messageID: string | null;
 	}
 
 	type GuildAuditLogsAction = keyof GuildAuditLogsActions;
@@ -2144,6 +2189,9 @@ declare module 'discord.js' {
 		MEMBER_BAN_REMOVE?: number;
 		MEMBER_UPDATE?: number;
 		MEMBER_ROLE_UPDATE?: number;
+		MEMBER_MOVE?: number;
+		MEMBER_DISCONNECT?: number;
+		BOT_ADD?: number;
 		ROLE_CREATE?: number;
 		ROLE_UPDATE?: number;
 		ROLE_DELETE?: number;
@@ -2157,6 +2205,12 @@ declare module 'discord.js' {
 		EMOJI_UPDATE?: number;
 		EMOJI_DELETE?: number;
 		MESSAGE_DELETE?: number;
+		MESSAGE_BULK_DELETE?: number;
+		MESSAGE_PIN?: number;
+		MESSAGE_UNPIN?: number;
+		INTEGRATION_CREATE?: number;
+		INTEGRATION_UPDATE?: number;
+		INTEGRATION_DELETE?: number;
 	}
 
 	type GuildAuditLogsActionType = 'CREATE'
@@ -2168,7 +2222,7 @@ declare module 'discord.js' {
 		before?: Snowflake | GuildAuditLogsEntry;
 		limit?: number;
 		user?: UserResolvable;
-		type?: string | number;
+		type?: GuildAuditLogsAction | number;
 	}
 
 	type GuildAuditLogsTarget = keyof GuildAuditLogsTargets;
@@ -2190,7 +2244,7 @@ declare module 'discord.js' {
 	interface GuildCreateChannelOptions {
 		permissionOverwrites?: OverwriteResolvable[] | Collection<Snowflake, OverwriteResolvable>;
 		topic?: string;
-		type?: 'text' | 'voice' | 'category';
+		type?: Exclude<keyof typeof ChannelType, 'dm' | 'group' | 'unknown'>;
 		nsfw?: boolean;
 		parent?: ChannelResolvable;
 		bitrate?: number;
@@ -2229,13 +2283,18 @@ declare module 'discord.js' {
 		channel: GuildChannelResolvable | null;
 	}
 
-	type GuildFeatures = 'INVITE_SPLASH'
-		| 'MORE_EMOJI'
-		| 'VERIFIED'
-		| 'VIP_REGIONS'
-		| 'VANITY_URL'
+	type GuildFeatures = 'ANIMATED_ICON'
+		| 'BANNER'
+		| 'COMMERCE'
 		| 'DISCOVERABLE'
-		| 'FEATURABLE';
+		| 'FEATURABLE'
+		| 'INVITE_SPLASH'
+		| 'PUBLIC'
+		| 'NEWS'
+		| 'PARTNERED'
+		| 'VANITY_URL'
+		| 'VERIFIED'
+		| 'VIP_REGIONS';
 
 	interface GuildMemberEditData {
 		nick?: string;
@@ -2362,7 +2421,8 @@ declare module 'discord.js' {
 		| 'USER_PREMIUM_GUILD_SUBSCRIPTION'
 		| 'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1'
 		| 'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2'
-		| 'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3';
+		| 'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3'
+		| 'CHANNEL_FOLLOW_ADD';
 
 	interface OverwriteData {
 		allow?: PermissionResolvable;
@@ -2449,6 +2509,19 @@ declare module 'discord.js' {
 		| 'CHANNEL'
 		| 'GUILD_MEMBER'
 		| 'MESSAGE';
+
+	type Partialize<T> = {
+		id: string;
+		partial: true;
+		fetch(): Promise<T>;
+	} & {
+		[K in keyof Omit<T, 'id' | 'partial'>]: T[K] | null;
+	};
+
+	interface PartialMessage extends Partialize<Message> {}
+	interface PartialChannel extends Partialize<Channel> {}
+	interface PartialGuildMember extends Partialize<GuildMember> {}
+	interface PartialUser extends Partialize<User> {}
 
 	type PresenceStatus = ClientPresenceStatus | 'offline';
 
@@ -2556,11 +2629,6 @@ declare module 'discord.js' {
 		compress?: boolean;
 	}
 
-	type PartialType = 'USER'
-		| 'CHANNEL'
-		| 'GUILD_MEMBER'
-		| 'MESSAGE';
-
 	type WSEventType = 'READY'
 		| 'RESUMED'
 		| 'GUILD_CREATE'
@@ -2599,6 +2667,13 @@ declare module 'discord.js' {
 	type MessageEvent = { data: WebSocket.Data; type: string; target: WebSocket; };
 	type CloseEvent = { wasClean: boolean; code: number; reason: string; target: WebSocket; };
 	type ErrorEvent = { error: any, message: string, type: string, target: WebSocket; };
+
+	interface CrosspostedChannel {
+		channelID: Snowflake;
+		guildID: Snowflake;
+		type: keyof typeof ChannelType;
+		name: string;
+	}
 
 //#endregion
 }

@@ -154,7 +154,7 @@ class Guild extends Base {
      * * DISCOVERABLE
      * * FEATURABLE
      * * INVITE_SPLASH
-     * * LURKABLE
+     * * PUBLIC
      * * NEWS
      * * PARTNERED
      * * VANITY_URL
@@ -401,6 +401,15 @@ class Guild extends Base {
    */
   get joinedAt() {
     return new Date(this.joinedTimestamp);
+  }
+
+  /**
+   * If this guild is partnered
+   * @type {boolean}
+   * @readonly
+   */
+  get partnered() {
+    return this.features.includes('PARTNERED');
   }
 
   /**
